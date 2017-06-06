@@ -45,10 +45,10 @@ def game_loop():
 
     # Player 1 & Player 2 Starting Positions, Directions
     player1_start_pos = [100, 100]
-    player2_start_pos = [400, 400]
+    player2_start_pos = [700, 500]
 
     player1_body = [[100, 100]]
-    player2_body = [[400, 400]]
+    player2_body = [[700, 500]]
 
     player1_direction = 'RIGHT'
     player2_direction = 'LEFT'
@@ -129,15 +129,15 @@ def game_loop():
             player2_start_pos[1] += 10
 
         # Increase Body: Player 1
-            player1_body.insert(0, list(player1_start_pos))
+        player1_body.insert(0, list(player1_start_pos))
         # Increase Body: Player 2
-            player2_body.insert(0, list(player2_start_pos))
+        player2_body.insert(0, list(player2_start_pos))
 
         # Draw Player 1 & Player 2
         for player1_pos in player1_body:
-            pygame.draw.rect(playSurface, LIGHT_BLUE, pygame.Rect(player1_start_pos[0], player1_start_pos[1], 10, 10))
+            pygame.draw.rect(playSurface, LIGHT_BLUE, pygame.Rect(player1_pos[0], player1_pos[1], 10, 10))
         for player2_pos in player2_body:
-            pygame.draw.rect(playSurface, PINK, pygame.Rect(player2_start_pos[0], player2_start_pos[1], 10, 10))
+            pygame.draw.rect(playSurface, PINK, pygame.Rect(player2_pos[0], player2_pos[1], 10, 10))
 
         # Boundaries
         if player1_start_pos[0] > SCREEN_WIDTH - 10 or player1_start_pos[0] < 0:
@@ -176,6 +176,7 @@ def game_loop():
 
 def game_menu():
     print("TODO")
+
 
 class MainMenu(object):
 
