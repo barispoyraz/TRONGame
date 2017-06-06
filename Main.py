@@ -18,6 +18,9 @@ playSurface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("TRON Game!")
 fpsController = pygame.time.Clock()
 
+global paused
+paused = False
+
 
 def text(text2, font, color):
     text_surf = font.render(text2, True, color)
@@ -40,8 +43,31 @@ def game_over(winner):
     quit()
 
 
+def pause():
+    global paused
+
+    pause_text = pygame.font.SysFont("monaco", 72)
+    pause_text_surf, pause_text_rect = text("Game Paused\nPress P to Continue", pause_text, WHITE)
+    pause_text_rect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
+    playSurface.blit(pause_text_surf, pause_text_rect)
+
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = False
+
+        button(playSurface, "Continue", 100, 500, 100, 50, BLACK, BLUE)
+
+        pygame.display.flip()
+
+
 # Player 1: W, A, S, D , Player 2: UP ARROW, LEFT ARROW, DOWN ARROW, RIGHT ARROW
 def game_loop():
+    global paused
 
     # Player 1 & Player 2 Starting Positions, Directions
     player1_start_pos = [100, 100]
@@ -63,6 +89,11 @@ def game_loop():
             if event.type == pygame.QUIT:
                 stopped = True
             elif event.type == pygame.KEYDOWN:
+                # Pause
+                if event.key == pygame.K_p:
+                    paused = True
+                    pause()
+                    pygame.display.flip()
                 # Player 1 Controller
                 if event.key == pygame.K_d:
                     player1_change_to = 'RIGHT'
