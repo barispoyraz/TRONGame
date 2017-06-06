@@ -6,3 +6,4 @@ TRON Game built by using PyGame and Python 3.6.1
 * <s>Collisions and boundary checking</s>
 * Main Menu
 * Pause
+* Game Over
