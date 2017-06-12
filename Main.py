@@ -18,9 +18,6 @@ playSurface = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("TRON Game!")
 fpsController = pygame.time.Clock()
 
-global paused
-paused = False
-
 
 def text(text2, font, color):
     text_surf = font.render(text2, True, color)
@@ -44,12 +41,14 @@ def game_over(winner):
 
 
 def pause():
-    global paused
+    paused = True
 
-    pause_text = pygame.font.SysFont("monaco", 72)
-    pause_text_surf, pause_text_rect = text("Game Paused\nPress P to Continue", pause_text, WHITE)
-    pause_text_rect.center = ((SCREEN_WIDTH/2), (SCREEN_HEIGHT/2))
+    pause_text = pygame.font.SysFont("monaco", 48)
+    pause_text_surf, pause_text_rect = text("Game Paused Press P to Continue", pause_text, WHITE)
+    pause_text_rect.center = ((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2))
     playSurface.blit(pause_text_surf, pause_text_rect)
+
+    pygame.display.update()
 
     while paused:
         for event in pygame.event.get():
@@ -60,14 +59,14 @@ def pause():
                 if event.key == pygame.K_p:
                     paused = False
 
-        button(playSurface, "Continue", 100, 500, 100, 50, BLACK, BLUE)
+        """button(playSurface, "Continue", 100, 500, 100, 50, BLACK, BLUE)"""
+        fpsController.tick(23)
 
-        pygame.display.flip()
+    playSurface.fill(BLACK)
 
 
 # Player 1: W, A, S, D , Player 2: UP ARROW, LEFT ARROW, DOWN ARROW, RIGHT ARROW
 def game_loop():
-    global paused
 
     # Player 1 & Player 2 Starting Positions, Directions
     player1_start_pos = [100, 100]
@@ -93,7 +92,7 @@ def game_loop():
                 if event.key == pygame.K_p:
                     paused = True
                     pause()
-                    pygame.display.flip()
+                    pygame.display.update()
                 # Player 1 Controller
                 if event.key == pygame.K_d:
                     player1_change_to = 'RIGHT'
@@ -141,23 +140,23 @@ def game_loop():
 
         # Movement: Player 1
         if player1_direction == 'RIGHT':
-            player1_start_pos[0] += 10
+            player1_start_pos[0] += 5
         if player1_direction == 'LEFT':
-            player1_start_pos[0] -= 10
+            player1_start_pos[0] -= 5
         if player1_direction == 'UP':
-            player1_start_pos[1] -= 10
+            player1_start_pos[1] -= 5
         if player1_direction == 'DOWN':
-            player1_start_pos[1] += 10
+            player1_start_pos[1] += 5
 
         # Movement: Player 2
         if player2_direction == 'RIGHT':
-            player2_start_pos[0] += 10
+            player2_start_pos[0] += 5
         if player2_direction == 'LEFT':
-            player2_start_pos[0] -= 10
+            player2_start_pos[0] -= 5
         if player2_direction == 'UP':
-            player2_start_pos[1] -= 10
+            player2_start_pos[1] -= 5
         if player2_direction == 'DOWN':
-            player2_start_pos[1] += 10
+            player2_start_pos[1] += 5
 
         # Increase Body: Player 1
         player1_body.insert(0, list(player1_start_pos))
@@ -166,9 +165,9 @@ def game_loop():
 
         # Draw Player 1 & Player 2
         for player1_pos in player1_body:
-            pygame.draw.rect(playSurface, LIGHT_BLUE, pygame.Rect(player1_pos[0], player1_pos[1], 10, 10))
+            pygame.draw.rect(playSurface, LIGHT_BLUE, pygame.Rect(player1_pos[0], player1_pos[1], 5, 5))
         for player2_pos in player2_body:
-            pygame.draw.rect(playSurface, PINK, pygame.Rect(player2_pos[0], player2_pos[1], 10, 10))
+            pygame.draw.rect(playSurface, PINK, pygame.Rect(player2_pos[0], player2_pos[1], 5, 5))
 
         # Boundaries
         if player1_start_pos[0] > SCREEN_WIDTH - 10 or player1_start_pos[0] < 0:
@@ -201,47 +200,20 @@ def game_loop():
             if player2_start_pos[0] == blocks[0] and player2_start_pos[1] == blocks[1]:
                 game_over(1)
 
-        pygame.display.flip()
-        fpsController.tick(15)
+        pygame.display.update()
+        fpsController.tick(23)
 
 
 def game_menu():
     print("TODO")
 
 
-class MainMenu(object):
-
-    @staticmethod
-    def display_frame(screen):
-        pygame.font.init()
-        tron = pygame.Color(159, 49, 178)
-        game = pygame.Color(255, 106, 0)
-
-        game_font = pygame.font.SysFont("Times New Roman", 48)
-        tron_surf = game_font.render("TRON", True, tron)
-        center_x = (SCREEN_WIDTH // 2) - (tron_surf.get_width() // 2)
-        center_y = (SCREEN_HEIGHT // 6) - (tron_surf.get_height() // 2)
-        screen.blit(tron_surf, [center_x - 70, center_y])
-
-        game_surf = game_font.render("Game!", True, game )
-        screen.blit(game_surf, [center_x + 80, center_y])
-
-        # Button
-        mouse = pygame.mouse.get_pos()
-
-        if 350 + 100 > mouse[0] > 350 and 325 + 50 > mouse[1] > 325:
-            pygame.draw.rect(screen, BLUE, (350, 325, 100, 50))
-        else:
-            pygame.draw.rect(screen, BLACK, (350, 325, 100, 50))
-
-        # Button Play:
-        button(screen, "Play", 325, 225, 100, 50, BLACK, BLUE, "play")
-        # Button Credits:
-        button(screen, "Credits", 325, 325, 100, 50, BLACK, BLUE, "credits")
-        # Button Exit:
-        button(screen, "Exit", 325, 425, 100, 50, BLACK, BLUE, "exit")
-
-        pygame.display.flip()
+# TODO
+def show_credits(screen):
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("TRON Game!")
+    screen.fill(BLACK)
+    pygame.display.update()
 
 
 def button(screen, msg, x, y, w, h, init_color, focus_color, action = None):
@@ -271,12 +243,7 @@ def button(screen, msg, x, y, w, h, init_color, focus_color, action = None):
     screen.blit(play_text_surf, play_text_rect)
 
 
-# TODO
-def show_credits(screen):
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("TRON Game!")
-    screen.fill(BLACK)
-    pygame.display.update()
+
 
 
 def main():
