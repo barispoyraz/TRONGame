@@ -7,3 +7,5 @@ TRON Game built by using PyGame and Python 3.6.1
 * Main Menu
 * Pause
 * Game Over
+* Key Configuration
+* Selecting Number of Players
