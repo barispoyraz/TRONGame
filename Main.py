@@ -2,6 +2,8 @@ import pygame
 import sys
 import time
 
+from Player import Player
+
 pygame.init()
 
 SCREEN_WIDTH = 800
@@ -75,6 +77,9 @@ def game_loop():
     player1_body = [[100, 100]]
     player2_body = [[700, 500]]
 
+    player1 = Player(pygame.K_w, pygame.K_s, pygame.K_a, pygame.K_d, LIGHT_BLUE)
+    player2 = Player(pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT, PINK)
+
     player1_direction = 'RIGHT'
     player2_direction = 'LEFT'
 
@@ -94,23 +99,23 @@ def game_loop():
                     pause()
                     pygame.display.update()
                 # Player 1 Controller
-                if event.key == pygame.K_d:
+                if event.key == getattr(player1, 'right_key'):
                     player1_change_to = 'RIGHT'
-                if event.key == pygame.K_a:
+                if event.key == getattr(player1, 'left_key'):
                     player1_change_to = 'LEFT'
-                if event.key == pygame.K_w:
+                if event.key == getattr(player1, 'up_key'):
                     player1_change_to = 'UP'
-                if event.key == pygame.K_s:
+                if event.key == getattr(player1, 'down_key'):
                     player1_change_to = 'DOWN'
 
                 # Player 2 Controller
-                if event.key == pygame.K_RIGHT:
+                if event.key == getattr(player2, 'right_key'):
                     player2_change_to = 'RIGHT'
-                if event.key == pygame.K_LEFT:
+                if event.key == getattr(player2, 'left_key'):
                     player2_change_to = 'LEFT'
-                if event.key == pygame.K_UP:
+                if event.key == getattr(player2, 'up_key'):
                     player2_change_to = 'UP'
-                if event.key == pygame.K_DOWN:
+                if event.key == getattr(player2, 'down_key'):
                     player2_change_to = 'DOWN'
 
                 # Exit Game (May turn into pause at some point)
@@ -165,9 +170,9 @@ def game_loop():
 
         # Draw Player 1 & Player 2
         for player1_pos in player1_body:
-            pygame.draw.rect(playSurface, LIGHT_BLUE, pygame.Rect(player1_pos[0], player1_pos[1], 5, 5))
+            pygame.draw.rect(playSurface, getattr(player1, 'color'), pygame.Rect(player1_pos[0], player1_pos[1], 5, 5))
         for player2_pos in player2_body:
-            pygame.draw.rect(playSurface, PINK, pygame.Rect(player2_pos[0], player2_pos[1], 5, 5))
+            pygame.draw.rect(playSurface, getattr(player2, 'color'), pygame.Rect(player2_pos[0], player2_pos[1], 5, 5))
 
         # Boundaries
         if player1_start_pos[0] > SCREEN_WIDTH - 10 or player1_start_pos[0] < 0:
@@ -241,9 +246,6 @@ def button(screen, msg, x, y, w, h, init_color, focus_color, action = None):
     # play_text_rect.center( (350 + (100/2)), (225 + (50/2)) )
     play_text_rect.center = ( (x + (w/2)), (y + (h/2)))
     screen.blit(play_text_surf, play_text_rect)
-
-
-
 
 
 def main():
