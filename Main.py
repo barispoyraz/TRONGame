@@ -38,8 +38,18 @@ def game_over(winner):
 
     pygame.display.flip()
     time.sleep(4)
-    pygame.quit()
-    quit()
+
+    game_over_menu()
+    """pygame.quit()
+    quit()"""
+
+
+def game_over_menu():
+    playSurface.fill(BLACK)
+    over_text = pygame.font.SysFont("monaco", 48)
+    over_surf, over_rect = text("What would you like to do?", over_text, WHITE)
+    over_rect.center = ((SCREEN_WIDTH / 2), (SCREEN_HEIGHT / 2))
+    playSurface.blit(over_surf, over_rect)
 
 
 def pause():
