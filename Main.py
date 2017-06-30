@@ -39,9 +39,8 @@ def game_over(winner):
     pygame.display.flip()
     time.sleep(4)
 
-    game_over_menu()
-    """pygame.quit()
-    quit()"""
+    pygame.quit()
+    quit()
 
 
 def game_over_menu():

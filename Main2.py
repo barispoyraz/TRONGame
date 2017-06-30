@@ -1,6 +1,4 @@
 import wx
-from Player import Player
-
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -15,16 +13,15 @@ class TronGame(wx.Frame):
 
         self.main_menu_panel = MainMenuPanel(self)
         self.credits_panel = CreditsPanel(self)
-        self.play_panel = PlayPanel(self)
 
-        self.play_panel.Hide()
         self.credits_panel.Hide()
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.main_menu_panel, 1, wx.EXPAND)
-        self.sizer.Add(self.play_panel, 1, wx.EXPAND)
         self.sizer.Add(self.credits_panel, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
+
+        self.Show()
 
 
 class MainMenuPanel(wx.Panel):
@@ -48,9 +45,10 @@ class MainMenuPanel(wx.Panel):
 
     def switch_panels(self, event):
         if event.GetId() is 1:
-            self.GetParent().main_menu_panel.Hide()
-            self.GetParent().play_panel.Show()
-            self.GetParent().Layout()
+            self.GetParent().Hide()
+            import Main as game
+            game.main()
+            self.GetParent().Close()
         elif event.GetId() is 2:
             self.GetParent().main_menu_panel.Hide()
             self.GetParent().credits_panel.Show()
@@ -61,6 +59,7 @@ class MainMenuPanel(wx.Panel):
 
 class CreditsPanel(wx.Panel):
     def __init__(self, parent):
+
         wx.Panel.__init__(self, parent=parent)
 
         self.SetBackgroundColour(wx.BLACK)
@@ -80,14 +79,6 @@ class CreditsPanel(wx.Panel):
             self.GetParent().credits_panel.Hide()
             self.GetParent().main_menu_panel.Show()
         self.GetParent().Layout()
-
-
-class PlayPanel(wx.Panel):
-    def __init(self, parent):
-        wx.Panel.__init__(self, parent=parent)
-
-        self.SetBackgroundColour(wx.BLACK)
-        print("a")
 
 
 def main():
