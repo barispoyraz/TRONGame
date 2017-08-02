@@ -1,5 +1,7 @@
 # TRONGame #
-TRON Game built by using PyGame and Python 3.6.1
+
+PythonBased includes implementation of the game in Python  
+WebBased includes implementation of the game in Javascript  
 
 ## TODO: ##
 * Integrate with PGU - wxPython is not recommended with PyGame, and I have some issues with it, therefore PGU is my next choice to integrate the game 
