@@ -24,9 +24,6 @@ var player2BodyArray = [];
 var player2BodyStart = new PlayerBody(700, 500);
 player2BodyArray.push(player2BodyStart);
 
-/*var player1Body = [[100, 100]];
-var player2Body = [[700, 500]];*/
-
 //Player1 & Player2 Direction & Change
 var player1Direction = 'RIGHT';
 var player2Direction = 'LEFT';
@@ -141,23 +138,19 @@ function mainLoop(canvas, ctx) {
         finished = true;
         gameOver(2);
     }
-    //game_over(2)
     if (player1StartPos[1] > canvas.height - 10 || player1StartPos[1] < 0) {
         finished = true;
         gameOver(2);
     }
-    //game_over(2)
 
     if (player2StartPos[0] > canvas.width - 10 || player2StartPos[0] < 0) {
         finished = true;
         gameOver(1);
     }
-    //game_over(1)
     if (player2StartPos[1] > canvas.height - 10 || player2StartPos[1] < 0) {
         finished = true;
         gameOver(1);
     }
-    //game_over(1)
 
     //Collision to yourself
     for (var i = 1; i < player1BodyArray.length; i++)
@@ -166,14 +159,11 @@ function mainLoop(canvas, ctx) {
             gameOver(2);
         }
 
-    //game_over(2)
-
     for (var i = 1; i < player2BodyArray.length; i++)
         if (player2StartPos[0] == player2BodyArray[i].x && player2StartPos[1] == player2BodyArray[i].y) {
             finished = true;
             gameOver(1);
         }
-    //game_over(1)
 
     //Collision to other player
     //Player 1 colliding to Player 2
@@ -182,7 +172,6 @@ function mainLoop(canvas, ctx) {
             finished = true;
             gameOver(2);
         }
-    //game_over(2)
 
     //Player 2 colliding to Player 1
     for (var i = 1; i < player1BodyArray.length; i++)
@@ -190,7 +179,6 @@ function mainLoop(canvas, ctx) {
             finished = true;
             gameOver(1);
         }
-    //game_over(1)
 
     if (finished == false) {
         requestAnimationFrame(function () {
@@ -207,131 +195,7 @@ function mainLoop(canvas, ctx) {
         setTimeout(function () {
             location.reload();
         }, delayMillis);
-    }
-
-    /*while (stopped == false) {
-    
-        //Player1 Controller
-        if (event.which == 68) {   //d
-            player1ChangeTo = 'RIGHT';
-            console.log("sag");
-        }
-        if (event.which == 65)   //a
-            player1ChangeTo = 'LEFT';
-        if (event.which == 87)   //w
-            player1ChangeTo = 'UP';
-        if (event.which == 83)  //s
-            player1ChangeTo = 'DOWN';
-    
-        //Player2 Controller
-        if (event.which == 39)   //right arrow
-            player2ChangeTo = 'RIGHT';
-        if (event.which == 37)   //left arrow
-            player2ChangeTo = 'LEFT';
-        if (event.which == 38)   //up arrow
-            player2ChangeTo = 'UP';
-        if (event.which == 40)  //down arrow
-            player2ChangeTo = 'DOWN';
-    
-        //Validation of the Direction: Player 1
-        if (player1ChangeTo == 'RIGHT' && !player1Direction == 'LEFT')
-            player1_direction = 'RIGHT'
-        if (player1ChangeTo == 'LEFT' && !player1Direction == 'RIGHT')
-            player1_direction = 'LEFT'
-        if (player1ChangeTo == 'UP' && !player1Direction == 'DOWN')
-            player1_direction = 'UP'
-        if (player1ChangeTo == 'DOWN' && !player1Direction == 'UP')
-            player1_direction = 'DOWN'
-    
-        //Validation of the Driection: Player 2
-        if (player2ChangeTo == 'RIGHT' && !player2Direction == 'LEFT')
-            player2Direction = 'RIGHT'
-        if (player2ChangeTo == 'LEFT' && !player2Direction == 'RIGHT')
-            player2Direction = 'LEFT'
-        if (player2ChangeTo == 'UP' && !player2Direction == 'DOWN')
-            player2Direction = 'UP'
-        if (player2ChangeTo == 'DOWN' && !player2Direction == 'UP')
-            player2Direction = 'DOWN'
-    
-        //Movement: Player1
-        if (player1Direction == 'RIGHT')
-            player1StartPos[0] += 5
-        if (player1Direction == 'LEFT')
-            player1StartPos[0] -= 5
-        if (player1Direction == 'UP')
-            player1StartPos[1] -= 5
-        if (player1Direction == 'DOWN')
-            player1StartPos[1] += 5
-    
-        //Movement: Player2
-        if (player2Direction == 'RIGHT')
-            player2StartPos[0] += 5
-        if (player2Direction == 'LEFT')
-            player2StartPos[0] -= 5
-        if (player2Direction == 'UP')
-            player2StartPos[1] -= 5
-        if (player2Direction == 'DOWN')
-            player2StartPos[1] += 5
-    
-        //Increase Body: Player1
-        player1Body[0] = player1StartPos;
-        //Increase Body: Player2
-        player2Body[0] = player2StartPos;
-    
-        //Draw Player 1 & Player 2
-        var index1, index2;
-    
-        for (index1 = 0; index1 < player1Body.length; index1++) {
-            ctx.fillStyle = lightBlueColor;
-            ctx.fillRect(player1Body[0], player1Body[1], 5, 5);
-        }
-        for (index2 = 0; index2 < player2Body.length; index2++) {
-            ctx.fillStyle = pinkColor;
-            ctx.fillRect(player2Body[0], player2Body[1], 5, 5);
-        }
-    
-        //Boundaries
-        if (player1StartPos[0] > canvas.width - 10 || player1StartPos[0] < 0)
-            stopped = true;
-        //game_over(2)
-        if (player1StartPos[1] > canvas.height - 10 || player1StartPos[1] < 0)
-            stopped = true;
-        //game_over(2)
-    
-        if (player2StartPos[0] > canvas.width - 10 || player2StartPos[0] < 0)
-            stopped = true;
-        //game_over(1)
-        if (player2StartPos[1] > canvas.height - 10 || player2StartPos[1] < 0)
-            stopped = true;
-        //game_over(1)
-    
-        //Collision to yourself
-        for (var i = 1; i < player1Body.length; i++)
-            if (player1_start_pos[0] == player1Body[i] && player1StartPos[1] == player1Body[i])
-                stopped = true;
-        //game_over(2)
-    
-        for (var i = 1; i < player2Body.length; i++)
-            if (player2_start_pos[0] == player2Body[i] && player2StartPos[1] == player2Body[i])
-                stopped = true;
-        //game_over(1)
-    
-        //Collision to other player
-        //Player 1 colliding to Player 2
-        for (var i = 1; i < player2Body.length; i++)
-            if (player1StartPos[0] == player1Body[i] && player1StartPos[1] == player1Body[i])
-                stopped = true;
-        //game_over(2)
-    
-        //Player 2 colliding to Player 1
-        for (var i = 1; i < player1Body.length; i++)
-            if (player2StartPos[0] == player2Body[i] && player2StartPos[1] == player2Body[i])
-                stopped = true;
-        //game_over(1)
-    
-    requestAnimationFrame(function () {
-        mainLoop(canvas);
-    });*/
+    } 
 }
 if (!finished) {
     requestAnimationFrame(function () {
