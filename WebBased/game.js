@@ -33,6 +33,13 @@ var player2ChangeTo = player2Direction;
 
 //Game Finished
 var finished = false;
+var started = false;
+
+if (started == true) {
+    requestAnimationFrame(function () {
+        mainLoop(canvasGame, ctx);
+    });
+}
 
 function PlayerBody(x, y) {
     this.x = x;
@@ -43,6 +50,9 @@ function start(canvas) {
     canvasGame = canvas;
     ctx = canvasGame.getContext('2d');
     window.addEventListener('keydown', onKeyDown, true);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    started = true;
+    finished = false;
     mainLoop(canvasGame, ctx);
 }
 
@@ -69,7 +79,9 @@ function onKeyDown() {
 }
 
 function gameOver(winner) {
-    document.getElementById("winner").innerHTML = "Player " + winner + "Wins";
+    //document.getElementById("winner").innerHTML = "Player " + winner + "Wins";
+    started = false;
+    window.alert("Player " + winner + " wins!");
 }
 
 function mainLoop(canvas, ctx) {
@@ -168,14 +180,14 @@ function mainLoop(canvas, ctx) {
     //Collision to other player
     //Player 1 colliding to Player 2
     for (var i = 1; i < player2BodyArray.length; i++)
-        if (player1StartPos[0] == player1BodyArray[i].x && player1StartPos[1] == player2BodyArray[i].y) {
+        if (player1StartPos[0] == player2BodyArray[i].x && player1StartPos[1] == player2BodyArray[i].y) {
             finished = true;
             gameOver(2);
         }
 
     //Player 2 colliding to Player 1
     for (var i = 1; i < player1BodyArray.length; i++)
-        if (player2StartPos[0] == player2BodyArray[i].x && player2StartPos[1] == player1BodyArray[i].y) {
+        if (player2StartPos[0] == player1BodyArray[i].x && player2StartPos[1] == player1BodyArray[i].y) {
             finished = true;
             gameOver(1);
         }
@@ -186,19 +198,10 @@ function mainLoop(canvas, ctx) {
 
             setTimeout(function () {
                 mainLoop(canvasGame, ctx);
-            }, delayMillis);         
+            }, delayMillis);
         });
     }
     else {
-        var delayMillis = 2500; // 2.5 second
-
-        setTimeout(function () {
-            location.reload();
-        }, delayMillis);
-    } 
-}
-if (!finished) {
-    requestAnimationFrame(function () {
-        mainLoop(canvasGame);
-    });
+        location.reload();
+    }
 }
