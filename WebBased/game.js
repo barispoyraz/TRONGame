@@ -1,6 +1,10 @@
-﻿/* Global Scope */
+/* Global Scope */
 var canvasGame;
 var ctx;
+var paused = false;
+
+var gameSituationInterval;
+var frameId;
 
 //Color Variables
 var whiteColor = 'rgb(255, 255, 255)';
@@ -76,12 +80,32 @@ function onKeyDown() {
         player2ChangeTo = 'UP';
     if (event.which == 40)  //Down arrow
         player2ChangeTo = 'DOWN';
+
+    //Pause
+    if (event.which == 80) {  //P
+        if (paused == false) {
+            paused = true;
+            cancelAnimationFrame(frameId);
+        }
+        else {
+            paused = false;
+            draw();
+        }
+    }
 }
 
 function gameOver(winner) {
-    //document.getElementById("winner").innerHTML = "Player " + winner + "Wins";
     started = false;
     window.alert("Player " + winner + " wins!");
+}
+
+function draw() {
+    frameId = requestAnimationFrame(function () {
+        var delayMillis = 50; // 0.05 second
+        setTimeout(function () {
+            mainLoop(canvasGame, ctx);
+        }, delayMillis);
+    });
 }
 
 function mainLoop(canvas, ctx) {
@@ -192,16 +216,10 @@ function mainLoop(canvas, ctx) {
             gameOver(1);
         }
 
-    if (finished == false) {
-        requestAnimationFrame(function () {
-            var delayMillis = 50; // 0.05 second
+    if (paused == false)
+        draw();
 
-            setTimeout(function () {
-                mainLoop(canvasGame, ctx);
-            }, delayMillis);
-        });
-    }
-    else {
+    if (finished == true)
         location.reload();
-    }
+
 }
