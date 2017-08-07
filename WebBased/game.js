@@ -60,7 +60,7 @@ function start(canvas) {
     mainLoop(canvasGame, ctx);
 }
 
-function onKeyDown() {
+function onKeyDown(event) {
     //Player 1
     if (event.which == 68)   //D
         player1ChangeTo = 'RIGHT';
