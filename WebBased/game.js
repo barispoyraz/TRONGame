@@ -13,6 +13,7 @@ var pinkColor = 'rgb(237, 21, 172)';
 
 var game = {
     ctx: null,
+    pauseKey: 80,
 
     //States
     paused: false,
@@ -89,7 +90,7 @@ function onKeyDown(event) {
         player2ChangeTo = 'DOWN';
 
     //Pause
-    if (event.which == 80) { //P
+    if (event.which == game.pauseKey) { //P
         if (game.paused == false) {
             game.paused = true;
             cancelAnimationFrame(frameId);
@@ -280,7 +281,12 @@ function movement(position, body, originalDirection) {
     player2BodyArray.unshift(player2AddBody);
 }
 
-function paintRect(body, ctx) {
+function paintRect() {
+    paintRectInner(game.body, game.ctx);
+}
+
+
+function paintRectInner(body, ctx) {
     var player1BodyArray = body.player1;
     var player2BodyArray = body.player2;
 
