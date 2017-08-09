@@ -1,8 +1,5 @@
 /* Global Scope */
 var canvasGame;
-var ctx;
-var paused = false;
-
 var gameSituationInterval;
 var frameId;
 
@@ -15,6 +12,12 @@ var lightBlueColor = 'rgb(66, 215, 244)';
 var pinkColor = 'rgb(237, 21, 172)';
 
 var game = {
+    ctx: null,
+
+    //States
+    paused: false,
+    started: false,
+    started: false,
     //Player1 & Player2 Start Positions
     startPosition: {
         player1: [100, 100],
@@ -45,13 +48,9 @@ var game = {
 var color1;
 var color2;
 
-//Game Finished
-var finished = false;
-var started = false;
-
-if (started == true) {
+if (game.started == true) {
     requestAnimationFrame(function() {
-        mainLoop(canvasGame, ctx);
+        mainLoop(canvasGame, game.ctx);
     });
 }
 
@@ -66,6 +65,9 @@ function colorAssignment(p1Color, p2Color) {
 }
 
 function onKeyDown(event) {
+    var player1ChangeTo = game.directionChanges.player1;
+    var player2ChangeTo = game.directionChanges.player2;
+
     //Player 1
     if (event.which == 68) //D
         player1ChangeTo = 'RIGHT';
@@ -88,18 +90,18 @@ function onKeyDown(event) {
 
     //Pause
     if (event.which == 80) { //P
-        if (paused == false) {
-            paused = true;
+        if (game.paused == false) {
+            game.paused = true;
             cancelAnimationFrame(frameId);
         } else {
-            paused = false;
+            game.paused = false;
             draw();
         }
     }
 }
 
 function gameOver(winner) {
-    started = false;
+    game.started = false;
     cancelAnimationFrame(frameId);
     window.alert("Player " + winner + " wins!");
 }
@@ -108,7 +110,7 @@ function draw() {
     frameId = requestAnimationFrame(function() {
         var delayMillis = 50; // 0.05 second
         setTimeout(function() {
-            mainLoop(canvasGame, ctx);
+            mainLoop(canvasGame, game.ctx);
         }, delayMillis);
     });
 }
@@ -122,14 +124,14 @@ function mainLoop(canvas, ctx) {
     validation(originalDirection, directionChanges);
     movement(position, body, originalDirection);
     updateInformation(body, originalDirection);
-    paintRect(body);
+    paintRect(body, ctx);
     boundaryChecking(position);
     collision(position, body);
 
-    if (paused == false)
+    if (game.paused == false)
         draw(game);
 
-    if (finished == true)
+    if (game.finished == true)
         location.reload();
 }
 
@@ -138,6 +140,7 @@ function collision(position, body) {
     var player2BodyArray = body.player2;
     var player1StartPos = position.player1;
     var player2StartPos = position.player2;
+    var finished = game.finished;
 
     //Collision to yourself
     for (var i = 1; i < player1BodyArray.length; i++)
@@ -171,6 +174,7 @@ function collision(position, body) {
 function boundaryChecking(position) {
     var player1StartPos = position.player1;
     var player2StartPos = position.player2;
+    var finished = game.finished;
 
     //Canvas Boundaries
     if (player1StartPos[0] > canvas.width - 10 || player1StartPos[0] < 0) {
@@ -276,7 +280,7 @@ function movement(position, body, originalDirection) {
     player2BodyArray.unshift(player2AddBody);
 }
 
-function paintRect(body) {
+function paintRect(body, ctx) {
     var player1BodyArray = body.player1;
     var player2BodyArray = body.player2;
 
@@ -294,11 +298,11 @@ function paintRect(body) {
 
 function start(canvas) {
     var canvasGame = canvas;
-    ctx = canvasGame.getContext('2d');
+    game.ctx = canvasGame.getContext('2d');
     window.addEventListener('keydown', onKeyDown, true);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    started = true;
-    finished = false;
+    game.ctx.clearRect(0, 0, canvas.width, canvas.height);
+    game.started = true;
+    game.finished = false;
 
     // direction changes init
     game.directionChanges.player1 = game.originalDirection.player1;
@@ -308,7 +312,7 @@ function start(canvas) {
     game.body.player1.push(new PlayerBody(100, 100));
     game.body.player2.push(new PlayerBody(700, 500));
 
-    mainLoop(canvasGame, ctx);
+    mainLoop(canvasGame, game.ctx);
 }
 
 function init(initObject) {
