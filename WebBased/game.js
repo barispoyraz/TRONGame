@@ -125,7 +125,7 @@ function mainLoop(canvas, ctx) {
     validation(originalDirection, directionChanges);
     movement(position, body, originalDirection);
     updateInformation(body, originalDirection);
-    paintRect(body, ctx);
+    paintRectInner(body, ctx);
     boundaryChecking(position);
     collision(position, body);
 
