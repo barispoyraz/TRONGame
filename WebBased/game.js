@@ -6,7 +6,7 @@ var paused = false;
 var gameSituationInterval;
 var frameId;
 
-//Color Variables
+//Color Constants
 var whiteColor = 'rgb(255, 255, 255)';
 var blackColor = 'rgb(0, 0, 0)';
 var blueColor = 'rgb(66, 134, 244)';
@@ -14,37 +14,43 @@ var redColor = 'rgb(255, 0, 0)';
 var lightBlueColor = 'rgb(66, 215, 244)';
 var pinkColor = 'rgb(237, 21, 172)';
 
+var game = {
+    //Player1 & Player2 Start Positions
+    startPosition: {
+        player1: [100, 100],
+        player2: [700, 500]
+    },
+    //Player1 & Player2 Body
+    body: {
+        player1: [],
+        player2: []
+    },
+    //Player1 & Player2 Directions
+    originalDirection: {
+        player1: 'RIGHT',
+        player2: 'LEFT'
+    },
+    //Player1 & Player2 Direction Changes        
+    directionChanges: {
+        player1: "",
+        player2: ""
+    },
+    color: {
+        player1: "",
+        player2: ""
+    }
+};
+
 //Picked colors
 var color1;
 var color2;
-
-//Player1 & Player2 Starting Positions
-var player1StartPos = [100, 100];
-var player2StartPos = [700, 500];
-
-//Player1 & Player2 Body
-
-var player1BodyArray = [];
-var player1BodyStart = new PlayerBody(100, 100);
-player1BodyArray.push(player1BodyStart);
-
-var player2BodyArray = [];
-var player2BodyStart = new PlayerBody(700, 500);
-player2BodyArray.push(player2BodyStart);
-
-//Player1 & Player2 Direction & Change
-var player1Direction = 'RIGHT';
-var player2Direction = 'LEFT';
-
-var player1ChangeTo = player1Direction;
-var player2ChangeTo = player2Direction;
 
 //Game Finished
 var finished = false;
 var started = false;
 
 if (started == true) {
-    requestAnimationFrame(function () {
+    requestAnimationFrame(function() {
         mainLoop(canvasGame, ctx);
     });
 }
@@ -61,32 +67,31 @@ function colorAssignment(p1Color, p2Color) {
 
 function onKeyDown(event) {
     //Player 1
-    if (event.which == 68)   //D
+    if (event.which == 68) //D
         player1ChangeTo = 'RIGHT';
-    if (event.which == 65)   //A
+    if (event.which == 65) //A
         player1ChangeTo = 'LEFT';
-    if (event.which == 87)   //W
+    if (event.which == 87) //W
         player1ChangeTo = 'UP';
-    if (event.which == 83)   //S
+    if (event.which == 83) //S
         player1ChangeTo = 'DOWN';
 
     //Player 2
-    if (event.which == 39)   //Right arrow
+    if (event.which == 39) //Right arrow
         player2ChangeTo = 'RIGHT';
-    if (event.which == 37)  //Left arrow
+    if (event.which == 37) //Left arrow
         player2ChangeTo = 'LEFT';
-    if (event.which == 38)   //Up arrow
+    if (event.which == 38) //Up arrow
         player2ChangeTo = 'UP';
-    if (event.which == 40)  //Down arrow
+    if (event.which == 40) //Down arrow
         player2ChangeTo = 'DOWN';
 
     //Pause
-    if (event.which == 80) {  //P
+    if (event.which == 80) { //P
         if (paused == false) {
             paused = true;
             cancelAnimationFrame(frameId);
-        }
-        else {
+        } else {
             paused = false;
             draw();
         }
@@ -100,30 +105,40 @@ function gameOver(winner) {
 }
 
 function draw() {
-    frameId = requestAnimationFrame(function () {
+    frameId = requestAnimationFrame(function() {
         var delayMillis = 50; // 0.05 second
-        setTimeout(function () {
+        setTimeout(function() {
             mainLoop(canvasGame, ctx);
         }, delayMillis);
     });
 }
 
 function mainLoop(canvas, ctx) {
-    validation();
-    movement();
-    updateInformation();
-    paintRect();
-    boundaryChecking();
-    collision();
-    
+    var position = game.startPosition;
+    var body = game.body;
+    var originalDirection = game.originalDirection;
+    var directionChanges = game.directionChanges;
+
+    validation(originalDirection, directionChanges);
+    movement(position, body, originalDirection);
+    updateInformation(body, originalDirection);
+    paintRect(body);
+    boundaryChecking(position);
+    collision(position, body);
+
     if (paused == false)
-        draw();
+        draw(game);
 
     if (finished == true)
-        location.reload();    
+        location.reload();
 }
 
-function collision() {
+function collision(position, body) {
+    var player1BodyArray = body.player1;
+    var player2BodyArray = body.player2;
+    var player1StartPos = position.player1;
+    var player2StartPos = position.player2;
+
     //Collision to yourself
     for (var i = 1; i < player1BodyArray.length; i++)
         if (player1StartPos[0] == player1BodyArray[i].x && player1StartPos[1] == player1BodyArray[i].y) {
@@ -137,15 +152,15 @@ function collision() {
             gameOver(1);
         }
 
-    //Collision to other player
-    //Player 1 colliding to Player 2
+        //Collision to other player
+        //Player 1 colliding to Player 2
     for (var i = 1; i < player2BodyArray.length; i++)
         if (player1StartPos[0] == player2BodyArray[i].x && player1StartPos[1] == player2BodyArray[i].y) {
             finished = true;
             gameOver(2);
         }
 
-    //Player 2 colliding to Player 1
+        //Player 2 colliding to Player 1
     for (var i = 1; i < player1BodyArray.length; i++)
         if (player2StartPos[0] == player1BodyArray[i].x && player2StartPos[1] == player1BodyArray[i].y) {
             finished = true;
@@ -153,7 +168,10 @@ function collision() {
         }
 }
 
-function boundaryChecking() {
+function boundaryChecking(position) {
+    var player1StartPos = position.player1;
+    var player2StartPos = position.player2;
+
     //Canvas Boundaries
     if (player1StartPos[0] > canvas.width - 10 || player1StartPos[0] < 0) {
         finished = true;
@@ -174,7 +192,12 @@ function boundaryChecking() {
     }
 }
 
-function validation() {
+function validation(originalDirection, directionChanges) {
+    var player1Direction = originalDirection.player1;
+    var player2Direction = originalDirection.player2;
+    var player1ChangeTo = directionChanges.player1;
+    var player2ChangeTo = directionChanges.player2;
+
     //Validation of the Direction: Player 1
     if (player1ChangeTo == 'RIGHT' && player1Direction != 'LEFT')
         player1Direction = 'RIGHT'
@@ -196,7 +219,12 @@ function validation() {
         player2Direction = 'DOWN'
 }
 
-function updateInformation() {
+function updateInformation(body, originalDirection) {
+    var player1BodyArray = body.player1;
+    var player2BodyArray = body.player2;
+    var player1Direction = originalDirection.player1;
+    var player2Direction = originalDirection.player2;
+
     document.getElementById("player1-direction").innerHTML = "Direction: " + player1Direction;
     document.getElementById("player2-direction").innerHTML = "Direction: " + player2Direction;
 
@@ -211,7 +239,14 @@ function updateInformation() {
     document.getElementById("player2-distance").innerHTML = "Distance: " + "X: " + distanceX2 + " Y: " + distanceY2;
 }
 
-function movement() {
+function movement(position, body, originalDirection) {
+    var player1BodyArray = body.player1;
+    var player2BodyArray = body.player2;
+    var player1StartPos = position.player1;
+    var player2StartPos = position.player2;
+    var player1Direction = originalDirection.player1;
+    var player2Direction = originalDirection.player2;
+
     //Movement: Player1
     if (player1Direction == 'RIGHT')
         player1StartPos[0] += 5
@@ -241,7 +276,10 @@ function movement() {
     player2BodyArray.unshift(player2AddBody);
 }
 
-function paintRect(){
+function paintRect(body) {
+    var player1BodyArray = body.player1;
+    var player2BodyArray = body.player2;
+
     //Draw Player 1 & Player 2
     for (var i = 0; i < player1BodyArray.length; i++) {
         ctx.fillStyle = color1;
@@ -254,20 +292,25 @@ function paintRect(){
     }
 }
 
-function start(canvas, ctx) {
-    canvasGame = canvas;
+function start(canvas) {
+    var canvasGame = canvas;
+    ctx = canvasGame.getContext('2d');
     window.addEventListener('keydown', onKeyDown, true);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     started = true;
     finished = false;
+
+    // direction changes init
+    game.directionChanges.player1 = game.originalDirection.player1;
+    game.directionChanges.player2 = game.originalDirection.player2;
+
+    // game body init
+    game.body.player1.push(new PlayerBody(100, 100));
+    game.body.player2.push(new PlayerBody(700, 500));
+
     mainLoop(canvasGame, ctx);
 }
 
 function init(initObject) {
-    var initObject = {
-        player1Color: initObject.player1Color,
-        player2Color: initObject.player2Color,
-        pauseKey: initObject.pauseKey
-    }
     colorAssignment(initObject.player1Color, initObject.player2Color);
 }
