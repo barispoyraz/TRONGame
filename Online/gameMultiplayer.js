@@ -8,6 +8,10 @@ var PLAYER_LIST = [];
 var canvasWIDTH = 800;
 var canvasHEIGHT = 600;
 var finished = false;
+var known = false;
+var count = 0;
+var WAITING_LIST = [];
+var shallWeStart = false;
 
 var playerBody = new PlayerBody(100, 100)
 
@@ -19,6 +23,8 @@ var Player = function(id){
 		startingPosition: [100, 100],
 		bodyArray: [playerBody],
 		color: "rgb(255,0,0)",
+		opponentNo: -1,
+		ready: 0,
 	}
 	
 	self.move = function(){
@@ -46,32 +52,21 @@ server.listen(2000);
 console.log("Server started.");
 
 io.sockets.on('connection', function(socket){
-	if (PLAYER_LIST.length == 0){
-		socket.id = Math.floor(Math.random() * 2);
-		SOCKET_LIST[socket.id] = socket;
-		var player = initPlayerStatus(socket.id);
-		PLAYER_LIST[socket.id] = player;
-	}		
-	else{
-		var uniquePlayerId = false;
-		while (!uniquePlayerId){
-			socket.id = Math.floor(Math.random() * 2);
-			uniquePlayerId = true;
-			for (var i in PLAYER_LIST){
-				if (PLAYER_LIST[i].player_no == socket.id){
-					uniquePlayerId = false;
-				}
-			}
-		}
-	}
+	
+	if (WAITING_LIST.length == 0)
+		socket.id = 0;			
+	else
+		socket.id = 1;
 	
 	SOCKET_LIST[socket.id] = socket;
 	var player = initPlayerStatus(socket.id);
-	PLAYER_LIST[socket.id] = player;
+	WAITING_LIST[socket.id] = player;
 	
 	socket.on('disconnect',function(){
 		delete SOCKET_LIST[socket.id];
 		delete PLAYER_LIST[socket.id];
+		count = 0;
+		WAITING_LIST = [];
 	});
 	
 	socket.on('keyPress',function(data){
@@ -84,30 +79,54 @@ io.sockets.on('connection', function(socket){
 		else if(data.changeTo == 'DOWN' && player.direction != 'UP')
 			player.direction = 'DOWN';
 	});	
+	
+	socket.on('readyState', function(data){
+		var waiting = "";
+		if (WAITING_LIST.length < 2)
+			socket.emit("waitingState", waiting)
+		else{
+			waiting = -1;
+			socket.emit("waitingState", waiting)	
+		}
+		PLAYER_LIST[socket.id] = WAITING_LIST[socket.id];
+		PLAYER_LIST[socket.id].ready = 1
+		count++;
+	});
 });
 
 setInterval(function(){
-	var updateCanvas = [];
-	for(var i in PLAYER_LIST){
-		var player = PLAYER_LIST[i];
-		player.move();
-		updateCanvas.push({
-			body:player.bodyArray,
-			playerColor: player.color,
-			playerStartPos: player.startingPosition,
-			playerNo: player.player_no,
-		});		
-		
-	}
-	for(var i in SOCKET_LIST){
-		var socket = SOCKET_LIST[i];
-		socket.emit('updateGameCanvas', updateCanvas);
-	}
+	if(WAITING_LIST.length < 2)
+		return;
+	else{
+		if (PLAYER_LIST.length < 2){
+			return ;
+		}
+		else{
+			var updateCanvas = [];
+			for(var i in PLAYER_LIST){
+				var player = PLAYER_LIST[i];
+				player.move();
+				updateCanvas.push({
+					body:player.bodyArray,
+					playerColor: player.color,
+					playerStartPos: player.startingPosition,
+					playerNo: player.player_no,
+					playerDirection: player.direction,
+				});			
+			}
+			for(var i in SOCKET_LIST){
+				var socket = SOCKET_LIST[i];
+				socket.emit('updateGameCanvas', updateCanvas);
+			}
+			
+			if (count > 1)
+				updateInformation(PLAYER_LIST);
 	
-	boundaryChecking(updateCanvas);
-	if(updateCanvas.length == 2)
-		collision(updateCanvas);
-	
+			boundaryChecking(updateCanvas);
+			if(updateCanvas.length == 2)
+				collision(updateCanvas);
+		}
+	}
 },1000/12);
 
 function PlayerBody(x, y) {
@@ -123,6 +142,8 @@ function initPlayerStatus(id){
 		player.startingPosition = [100, 100]
 		player.bodyArray[0] = new PlayerBody(100, 100)
 		player.color = "rgb(255, 0, 0)"
+		player.opponentNo = 1
+		player.ready = 0
 	}
 	else if(player.player_no == 1){
 		player.direction = "LEFT"
@@ -130,8 +151,17 @@ function initPlayerStatus(id){
 		player.startingPosition = [700, 500]
 		player.bodyArray[0] = new PlayerBody(700, 500)
 		player.color = "rgb(0, 255, 0)"
+		player.opponentNo = 0
+		player.ready = 0	
 	}
 	return player;
+}
+
+function updateInformation(information){
+	for (var i in SOCKET_LIST){
+		if (SOCKET_LIST[i].id == information[i].player_no)
+			SOCKET_LIST[i].emit('updateOpponentInformation', { info: information, currentPlayer: SOCKET_LIST[i].id});
+	}
 }
 
 function boundaryChecking(positions){
@@ -199,5 +229,7 @@ function gameOver(loserPlayer){
 		SOCKET_LIST[i].emit('gameOverSituation', winner);
 		delete SOCKET_LIST[i];
 		delete PLAYER_LIST[i];
+		count = 0;
+		WAITING_LIST = [];
 	}
 }
