@@ -124,8 +124,8 @@ function mainLoop(canvas, ctx) {
     var directionChanges = game.directionChanges;
 
     validation(originalDirection, directionChanges);
-    movement(position, body, directionChanges);
-    updateInformation(body, directionChanges);
+    movement(position, body, originalDirection);
+    updateInformation(body, originalDirection);
     paintRectInner(body, ctx);
     boundaryChecking(position);
     collision(position, body);
