@@ -3,6 +3,13 @@ var express = require('express');
 var gameApp = express();
 var server = require('http').Server(gameApp);
 var io = require('socket.io')(server,{});
+
+var roomNumber = 1;
+var gameRoom = "room-" + roomNumber;
+var currentRoom = gameRoom;
+var roomList = [];
+var first = true;
+
 var SOCKET_LIST = {};
 var PLAYER_LIST = [];
 var canvasWIDTH = 800;
@@ -11,13 +18,18 @@ var finished = false;
 var known = false;
 var count = 0;
 var WAITING_LIST = [];
-var shallWeStart = false;
+
+var playerListObject = {};
+
+// var playerListObject = [
+	// socketPlayerPair: "", {};
+// ]
 
 var playerBody = new PlayerBody(100, 100)
 
-var Player = function(id){
+var Player = function(id, socketID){
 	var self = {
-		player_no:id,
+		player_no: id,
 		direction:"RIGHT",
 		changeTo:"RIGHT",
 		startingPosition: [100, 100],
@@ -25,6 +37,8 @@ var Player = function(id){
 		color: "rgb(255,0,0)",
 		opponentNo: -1,
 		ready: 0,
+		sID: socketID,
+		roomId: "",
 	}
 	
 	self.move = function(){
@@ -43,6 +57,7 @@ var Player = function(id){
 	return self;
 }
 
+
 gameApp.get('/', function(req, res) {
 	res.sendFile(__dirname + '/client/trongame.html');
 });
@@ -53,89 +68,228 @@ console.log("Server started.");
 
 io.sockets.on('connection', function(socket){
 	
-	if (WAITING_LIST.length == 0)
-		socket.id = 0;			
-	else
-		socket.id = 1;
+	//Join Room
+	socket.on('room', function() {	
+		if (first == true){
+			socket.join(gameRoom);
+			//SOCKET_LIST.push(socket.id);
+			
+			var player = initPlayerStatus(0, socket.id, gameRoom);	
+			playerListObject[socket.id] = player;
+			
+			first = false;
+			roomList.push(gameRoom);
+			io.sockets.in(gameRoom).emit('message', 'You are in room: ' + gameRoom );
+		}
+		else{
+			var myRoom = io.sockets.adapter.rooms[gameRoom];
+			if(myRoom == undefined){
+				socket.join(gameRoom);
+				//SOCKET_LIST.push(socket.id);
+				
+				var player = initPlayerStatus(0, socket.id, gameRoom);
+				playerListObject[socket.id] = player;
+				
+				io.sockets.in(gameRoom).emit('message', 'You are in room: ' + gameRoom );
+				return;
+			}
+			if(myRoom.length < 2){
+				socket.join(gameRoom);
+				//SOCKET_LIST.push(socket.id);
+				
+				var player = initPlayerStatus(1, socket.id, gameRoom);
+				playerListObject[socket.id] = player;
+				
+				roomList.push(gameRoom);
+				io.sockets.in(gameRoom).emit('waitingState', gameRoom);
+				roomNumber++;
+				gameRoom = "room-" + roomNumber;	
+			}
+		}
+		
+		// socket.on('keyPress',function(data){
+			// console.log("2");
+			// if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
+				// player.direction = 'RIGHT';
+			// else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
+				// player.direction = 'LEFT';
+			// else if(data.changeTo == 'UP' && player.direction != 'DOWN')
+				// player.direction = 'UP';
+			// else if(data.changeTo == 'DOWN' && player.direction != 'UP')
+				// player.direction = 'DOWN';
+		// });		
+	});
 	
-	SOCKET_LIST[socket.id] = socket;
-	var player = initPlayerStatus(socket.id);
-	WAITING_LIST[socket.id] = player;
-	
+
 	socket.on('disconnect',function(){
 		delete SOCKET_LIST[socket.id];
 		delete PLAYER_LIST[socket.id];
 		count = 0;
 		WAITING_LIST = [];
-	});
-	
+	});		
+		
 	socket.on('keyPress',function(data){
-		if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
-			player.direction = 'RIGHT';
-		else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
-			player.direction = 'LEFT';
-		else if(data.changeTo == 'UP' && player.direction != 'DOWN')
-			player.direction = 'UP';
-		else if(data.changeTo == 'DOWN' && player.direction != 'UP')
-			player.direction = 'DOWN';
-	});	
-	
+			console.log("2");
+			if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
+				player.direction = 'RIGHT';
+			else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
+				player.direction = 'LEFT';
+			else if(data.changeTo == 'UP' && player.direction != 'DOWN')
+				player.direction = 'UP';
+			else if(data.changeTo == 'DOWN' && player.direction != 'UP')
+				player.direction = 'DOWN';
+	});		
+		
 	socket.on('readyState', function(data){
-		var waiting = "";
-		if (WAITING_LIST.length < 2)
-			socket.emit("waitingState", waiting)
-		else{
-			waiting = -1;
-			socket.emit("waitingState", waiting)	
+		console.log(data);
+		var count = 0;
+		playerListObject[data].ready = 1;
+		
+		console.log("aa: " + playerListObject[socket.id].player_no);
+		console.log("We are in room: " + playerListObject[socket.id].roomId.toString());
+		
+		var p1 = playerListObject[data];
+		var p2;
+		
+		
+		
+		for (var playerObjects in playerListObject){
+			if (playerObjects.roomId == playerListObject[data].roomId){
+				if (playerObjects.ready == 1){
+					count++;
+				}
+				if (playerObjects.player_no != playerListObject[data].player_no){
+					p2 = playerObjects;
+				}
+			}
 		}
-		PLAYER_LIST[socket.id] = WAITING_LIST[socket.id];
-		PLAYER_LIST[socket.id].ready = 1
-		count++;
+		
+		if(count == 2){
+			console("I can call beginGame");
+			var players = [];
+			players.push(p1);
+			players.push(p2);
+			console.log("roomid: " + playerListObject[data].roomId);
+			beginGame(playerListObject[data].roomId, players);
+		}
 	});
 });
 
-setInterval(function(){
-	if(WAITING_LIST.length < 2)
-		return;
-	else{
-		if (PLAYER_LIST.length < 2){
-			return ;
-		}
-		else{
-			var updateCanvas = [];
-			for(var i in PLAYER_LIST){
-				var player = PLAYER_LIST[i];
-				player.move();
-				updateCanvas.push({
-					body:player.bodyArray,
-					playerColor: player.color,
-					playerStartPos: player.startingPosition,
-					playerNo: player.player_no,
-					playerDirection: player.direction,
-				});			
-			}
-			for(var i in SOCKET_LIST){
-				var socket = SOCKET_LIST[i];
-				socket.emit('updateGameCanvas', updateCanvas);
-			}
+function beginGame(playRoom, players){
+	setInterval(function(){
+		var updateCanvas = [];
+		for (var i in players){
+			var currentPlayer = players[i];
+			currentPlayer.move();
+			updateCanvas.push({
+				body: currentPlayer.bodyArray,
+				playerColor: currentPlayer.color,
+				playerStartPos:  currentPlayer.startingPosition,
+				playerNo: currentPlayer.player_no,
+				playerDirection: currentPlayer.direction,
+			});
 			
-			if (count > 1)
-				updateInformation(PLAYER_LIST);
+			var socket = currentPlayer.sID;
+			socket.emit('updateGameCanvas', updateCanvas);
+		}
+
+		updateInformation(players);
+		boundaryChecking(updateCanvas);
+		collision(updateCanvas);
+		
+	}, 1000/12);
 	
-			boundaryChecking(updateCanvas);
-			if(updateCanvas.length == 2)
-				collision(updateCanvas);
+	function updateInformation(players){
+		/*for (var i in players){
+			var currentPlayer = players[i];
+			var socket = currentPlayer.sID;
+			var opponentPlayerSID 
+			
+			
+			if (SOCKET_LIST[i].id == information[i].player_no)
+				SOCKET_LIST[i].emit('updateOpponentInformation', { info: information, currentPlayer: SOCKET_LIST[i].id});
+		}*/
+	}
+
+	function boundaryChecking(positions){
+		//Canvas Boundaries
+		var loserPlayer;
+		for (var i = 0; i < positions.length; i++){
+			if (positions[i].playerStartPos[0] > canvasWIDTH - 10 || positions[i].playerStartPos[0] < 0){
+				finished = true;
+				loserPlayer = positions[i].playerNo;
+				gameOver(loserPlayer);
+			}
+			if (positions[i].playerStartPos[1] > canvasHEIGHT- 10 || positions[i].playerStartPos[1] < 0) {
+				finished = true;
+				loserPlayer = positions[i].playerNo;
+				gameOver(loserPlayer);
+			}	
 		}
 	}
-},1000/12);
+
+	function collision(positions){
+		var loserPlayer;
+	
+		//Collision to yourself
+		for (var i = 1; i < positions[0].body.length; i++){
+			if (positions[0].playerStartPos[0] == positions[0].body[i].x && positions[0].playerStartPos[1] ==  positions[0].body[i].y){
+				finished = true;
+				loserPlayer = positions[0].playerNo;
+				gameOver(loserPlayer);
+			}
+		}
+	
+		for (var i = 1; i < positions[1].body.length; i++){
+			if (positions[1].playerStartPos[0] == positions[1].body[i].x && positions[1].playerStartPos[1] ==  positions[1].body[i].y){
+				finished = true;
+				loserPlayer = positions[1].playerNo;
+				gameOver(loserPlayer);
+			}	
+		}
+	
+		for (var i = 1; i < positions[1].body.length; i++){
+			if (positions[0].playerStartPos[0] == positions[1].body[i].x && positions[0].playerStartPos[1] ==  positions[1].body[i].y){
+				finished = true;
+				loserPlayer = positions[0].playerNo;
+				gameOver(loserPlayer);
+			}
+		}
+	
+		for (var i = 1; i < positions[0].body.length; i++){
+			if (positions[1].playerStartPos[0] == positions[0].body[i].x && positions[1].playerStartPos[1] ==  positions[0].body[i].y){
+				finished = true;
+				loserPlayer = positions[1].playerNo;
+				gameOver(loserPlayer);
+			}
+		}	
+}	
+
+	function gameOver(loserPlayer){
+		var winner;
+		if (loserPlayer == 0)
+			winner = 2;
+		else
+			winner = 1;
+	
+		for (var i in SOCKET_LIST){
+			SOCKET_LIST[i].emit('gameOverSituation', winner);
+			delete SOCKET_LIST[i];
+			delete PLAYER_LIST[i];
+			count = 0;
+			WAITING_LIST = [];
+		}
+	}
+}
 
 function PlayerBody(x, y) {
     this.x = x;
     this.y = y;
 }
 
-function initPlayerStatus(id){
-	var player = Player(id)
+function initPlayerStatus(id, sIDin, gameRoom){
+	var player = Player();
+	player.player_no = id;
 	if (player.player_no == 0 ){
 		player.direction = "RIGHT"
 		player.changeTo = "RIGHT"
@@ -144,6 +298,8 @@ function initPlayerStatus(id){
 		player.color = "rgb(255, 0, 0)"
 		player.opponentNo = 1
 		player.ready = 0
+		player.sID = sIDin;
+		player.roomId = gameRoom;
 	}
 	else if(player.player_no == 1){
 		player.direction = "LEFT"
@@ -153,83 +309,8 @@ function initPlayerStatus(id){
 		player.color = "rgb(0, 255, 0)"
 		player.opponentNo = 0
 		player.ready = 0	
+		player.sID = sIDin;
+		player.roomId = gameRoom;
 	}
 	return player;
-}
-
-function updateInformation(information){
-	for (var i in SOCKET_LIST){
-		if (SOCKET_LIST[i].id == information[i].player_no)
-			SOCKET_LIST[i].emit('updateOpponentInformation', { info: information, currentPlayer: SOCKET_LIST[i].id});
-	}
-}
-
-function boundaryChecking(positions){
-	//Canvas Boundaries
-	var loserPlayer;
-	for (var i = 0; i < positions.length; i++){
-		if (positions[i].playerStartPos[0] > canvasWIDTH - 10 || positions[i].playerStartPos[0] < 0){
-			finished = true;
-			loserPlayer = positions[i].playerNo;
-			gameOver(loserPlayer);
-		}
-		if (positions[i].playerStartPos[1] > canvasHEIGHT- 10 || positions[i].playerStartPos[1] < 0) {
-			finished = true;
-			loserPlayer = positions[i].playerNo;
-			gameOver(loserPlayer);
-		}	
-	}
-}
-
-function collision(positions){
-	var loserPlayer;
-	
-	//Collision to yourself
-	for (var i = 1; i < positions[0].body.length; i++){
-		if (positions[0].playerStartPos[0] == positions[0].body[i].x && positions[0].playerStartPos[1] ==  positions[0].body[i].y){
-			finished = true;
-			loserPlayer = positions[0].playerNo;
-			gameOver(loserPlayer);
-		}
-	}
-	
-	for (var i = 1; i < positions[1].body.length; i++){
-		if (positions[1].playerStartPos[0] == positions[1].body[i].x && positions[1].playerStartPos[1] ==  positions[1].body[i].y){
-			finished = true;
-			loserPlayer = positions[1].playerNo;
-			gameOver(loserPlayer);
-		}
-	}
-	
-	for (var i = 1; i < positions[1].body.length; i++){
-		if (positions[0].playerStartPos[0] == positions[1].body[i].x && positions[0].playerStartPos[1] ==  positions[1].body[i].y){
-			finished = true;
-			loserPlayer = positions[0].playerNo;
-			gameOver(loserPlayer);
-		}
-	}
-	
-	for (var i = 1; i < positions[0].body.length; i++){
-		if (positions[1].playerStartPos[0] == positions[0].body[i].x && positions[1].playerStartPos[1] ==  positions[0].body[i].y){
-			finished = true;
-			loserPlayer = positions[1].playerNo;
-			gameOver(loserPlayer);
-		}
-	}
-}
-
-function gameOver(loserPlayer){
-	var winner;
-	if (loserPlayer == 0)
-		winner = 2;
-	else
-		winner = 1;
-	
-	for (var i in SOCKET_LIST){
-		SOCKET_LIST[i].emit('gameOverSituation', winner);
-		delete SOCKET_LIST[i];
-		delete PLAYER_LIST[i];
-		count = 0;
-		WAITING_LIST = [];
-	}
 }
