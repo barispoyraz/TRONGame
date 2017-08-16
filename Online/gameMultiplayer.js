@@ -20,6 +20,7 @@ var count = 0;
 var WAITING_LIST = [];
 
 var playerListObject = {};
+var playerListObjectCount = 0;
 
 // var playerListObject = [
 	// socketPlayerPair: "", {};
@@ -76,6 +77,7 @@ io.sockets.on('connection', function(socket){
 			
 			var player = initPlayerStatus(0, socket.id, gameRoom);	
 			playerListObject[socket.id] = player;
+			playerListObjectCount++;
 			
 			first = false;
 			roomList.push(gameRoom);
@@ -89,6 +91,7 @@ io.sockets.on('connection', function(socket){
 				
 				var player = initPlayerStatus(0, socket.id, gameRoom);
 				playerListObject[socket.id] = player;
+				playerListObjectCount++;
 				
 				io.sockets.in(gameRoom).emit('message', 'You are in room: ' + gameRoom );
 				return;
@@ -99,6 +102,7 @@ io.sockets.on('connection', function(socket){
 				
 				var player = initPlayerStatus(1, socket.id, gameRoom);
 				playerListObject[socket.id] = player;
+				playerListObjectCount++;
 				
 				roomList.push(gameRoom);
 				io.sockets.in(gameRoom).emit('waitingState', gameRoom);
@@ -107,17 +111,17 @@ io.sockets.on('connection', function(socket){
 			}
 		}
 		
-		// socket.on('keyPress',function(data){
-			// console.log("2");
-			// if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
-				// player.direction = 'RIGHT';
-			// else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
-				// player.direction = 'LEFT';
-			// else if(data.changeTo == 'UP' && player.direction != 'DOWN')
-				// player.direction = 'UP';
-			// else if(data.changeTo == 'DOWN' && player.direction != 'UP')
-				// player.direction = 'DOWN';
-		// });		
+		socket.on('keypress',function(data){
+			console.log("KEY PRESSED");
+			if(data.changeto == 'right' && player.direction != 'left')
+				player.direction = 'right';
+			else if(data.changeto == 'left' && player.direction != 'right')
+				player.direction = 'left';
+			else if(data.changeto == 'up' && player.direction != 'down')
+				player.direction = 'up';
+			else if(data.changeto == 'down' && player.direction != 'up')
+				player.direction = 'down';
+		});		
 	});
 	
 
@@ -128,157 +132,151 @@ io.sockets.on('connection', function(socket){
 		WAITING_LIST = [];
 	});		
 		
-	socket.on('keyPress',function(data){
-			console.log("2");
-			if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
-				player.direction = 'RIGHT';
-			else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
-				player.direction = 'LEFT';
-			else if(data.changeTo == 'UP' && player.direction != 'DOWN')
-				player.direction = 'UP';
-			else if(data.changeTo == 'DOWN' && player.direction != 'UP')
-				player.direction = 'DOWN';
-	});		
+	// socket.on('keyPress',function(data){
+			// console.log("2");
+			// if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
+				// player.direction = 'RIGHT';
+			// else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
+				// player.direction = 'LEFT';
+			// else if(data.changeTo == 'UP' && player.direction != 'DOWN')
+				// player.direction = 'UP';
+			// else if(data.changeTo == 'DOWN' && player.direction != 'UP')
+				// player.direction = 'DOWN';
+	// });		
 		
 	socket.on('readyState', function(data){
 		console.log(data);
-		var count = 0;
 		playerListObject[data].ready = 1;
-		
-		console.log("aa: " + playerListObject[socket.id].player_no);
-		console.log("We are in room: " + playerListObject[socket.id].roomId.toString());
+		var start = false;
 		
 		var p1 = playerListObject[data];
 		var p2;
 		
-		
-		
-		for (var playerObjects in playerListObject){
-			if (playerObjects.roomId == playerListObject[data].roomId){
-				if (playerObjects.ready == 1){
-					count++;
-				}
-				if (playerObjects.player_no != playerListObject[data].player_no){
-					p2 = playerObjects;
+		for (var i in playerListObject){
+			var playerListTempObject = playerListObject[i];
+			if (playerListTempObject.roomId == p1.roomId){
+				console.log("111");
+				if (playerListTempObject.player_no != p1.player_no){
+					console.log("222");
+					p2 = playerListTempObject;
 				}
 			}
 		}
 		
-		if(count == 2){
-			console("I can call beginGame");
+		if (p1.ready == 1 && p2.ready == 1){
+			console.log("333");
 			var players = [];
 			players.push(p1);
 			players.push(p2);
-			console.log("roomid: " + playerListObject[data].roomId);
-			beginGame(playerListObject[data].roomId, players);
+			
+			console.log("roomid: " + p1.roomId);
+			console.log("roomid: " + p2.roomId);
+
+			start = true;
+			
+			setInterval(function(){
+				if (start == true){
+					var updateCanvas = [];
+					for (var i in players){
+						var currentPlayer = players[i];
+						currentPlayer.move();
+						updateCanvas.push({
+							body: currentPlayer.bodyArray,
+							playerColor: currentPlayer.color,
+							playerStartPos:  currentPlayer.startingPosition,
+							playerNo: currentPlayer.player_no,
+							playerDirection: currentPlayer.direction,
+						});
+						io.sockets.in(p1.roomId).emit('updateGameCanvas', updateCanvas);
+					}
+
+					updateInformation(players);
+					boundaryChecking(updateCanvas);
+					collision(updateCanvas);	
+				}
+			}, 1000/12);
 		}
 	});
 });
-
-function beginGame(playRoom, players){
-	setInterval(function(){
-		var updateCanvas = [];
-		for (var i in players){
-			var currentPlayer = players[i];
-			currentPlayer.move();
-			updateCanvas.push({
-				body: currentPlayer.bodyArray,
-				playerColor: currentPlayer.color,
-				playerStartPos:  currentPlayer.startingPosition,
-				playerNo: currentPlayer.player_no,
-				playerDirection: currentPlayer.direction,
-			});
-			
-			var socket = currentPlayer.sID;
-			socket.emit('updateGameCanvas', updateCanvas);
-		}
-
-		updateInformation(players);
-		boundaryChecking(updateCanvas);
-		collision(updateCanvas);
-		
-	}, 1000/12);
 	
-	function updateInformation(players){
-		/*for (var i in players){
-			var currentPlayer = players[i];
-			var socket = currentPlayer.sID;
-			var opponentPlayerSID 
+function updateInformation(players){
+	/*for (var i in players){
+		var currentPlayer = players[i];
+		var socket = currentPlayer.sID;
+		var opponentPlayerSID 	
 			
-			
-			if (SOCKET_LIST[i].id == information[i].player_no)
-				SOCKET_LIST[i].emit('updateOpponentInformation', { info: information, currentPlayer: SOCKET_LIST[i].id});
-		}*/
-	}
+		if (SOCKET_LIST[i].id == information[i].player_no)
+			SOCKET_LIST[i].emit('updateOpponentInformation', { info: information, currentPlayer: SOCKET_LIST[i].id});
+	}*/
+}
 
-	function boundaryChecking(positions){
+function boundaryChecking(positions){
 		//Canvas Boundaries
-		var loserPlayer;
-		for (var i = 0; i < positions.length; i++){
-			if (positions[i].playerStartPos[0] > canvasWIDTH - 10 || positions[i].playerStartPos[0] < 0){
-				finished = true;
-				loserPlayer = positions[i].playerNo;
-				gameOver(loserPlayer);
-			}
-			if (positions[i].playerStartPos[1] > canvasHEIGHT- 10 || positions[i].playerStartPos[1] < 0) {
-				finished = true;
-				loserPlayer = positions[i].playerNo;
-				gameOver(loserPlayer);
-			}	
+	var loserPlayer;
+	for (var i = 0; i < positions.length; i++){
+		if (positions[i].playerStartPos[0] > canvasWIDTH - 10 || positions[i].playerStartPos[0] < 0){
+			finished = true;
+			loserPlayer = positions[i].playerNo;
+			gameOver(loserPlayer);
+		}
+		if (positions[i].playerStartPos[1] > canvasHEIGHT- 10 || positions[i].playerStartPos[1] < 0) {
+			finished = true;
+			loserPlayer = positions[i].playerNo;
+			gameOver(loserPlayer);
+		}	
+	}
+}
+
+function collision(positions){
+	var loserPlayer;
+	
+	//Collision to yourself
+	for (var i = 1; i < positions[0].body.length; i++){
+		if (positions[0].playerStartPos[0] == positions[0].body[i].x && positions[0].playerStartPos[1] ==  positions[0].body[i].y){
+			finished = true;
+			loserPlayer = positions[0].playerNo;
+			gameOver(loserPlayer);
 		}
 	}
-
-	function collision(positions){
-		var loserPlayer;
 	
-		//Collision to yourself
-		for (var i = 1; i < positions[0].body.length; i++){
-			if (positions[0].playerStartPos[0] == positions[0].body[i].x && positions[0].playerStartPos[1] ==  positions[0].body[i].y){
-				finished = true;
-				loserPlayer = positions[0].playerNo;
-				gameOver(loserPlayer);
-			}
-		}
-	
-		for (var i = 1; i < positions[1].body.length; i++){
-			if (positions[1].playerStartPos[0] == positions[1].body[i].x && positions[1].playerStartPos[1] ==  positions[1].body[i].y){
-				finished = true;
-				loserPlayer = positions[1].playerNo;
-				gameOver(loserPlayer);
-			}	
-		}
-	
-		for (var i = 1; i < positions[1].body.length; i++){
-			if (positions[0].playerStartPos[0] == positions[1].body[i].x && positions[0].playerStartPos[1] ==  positions[1].body[i].y){
-				finished = true;
-				loserPlayer = positions[0].playerNo;
-				gameOver(loserPlayer);
-			}
-		}
-	
-		for (var i = 1; i < positions[0].body.length; i++){
-			if (positions[1].playerStartPos[0] == positions[0].body[i].x && positions[1].playerStartPos[1] ==  positions[0].body[i].y){
-				finished = true;
-				loserPlayer = positions[1].playerNo;
-				gameOver(loserPlayer);
-			}
+	for (var i = 1; i < positions[1].body.length; i++){
+		if (positions[1].playerStartPos[0] == positions[1].body[i].x && positions[1].playerStartPos[1] ==  positions[1].body[i].y){
+			finished = true;
+			loserPlayer = positions[1].playerNo;
+			gameOver(loserPlayer);
 		}	
+	}
+	
+	for (var i = 1; i < positions[1].body.length; i++){
+		if (positions[0].playerStartPos[0] == positions[1].body[i].x && positions[0].playerStartPos[1] ==  positions[1].body[i].y){
+			finished = true;
+			loserPlayer = positions[0].playerNo;
+			gameOver(loserPlayer);
+		}
+	}
+	
+	for (var i = 1; i < positions[0].body.length; i++){
+		if (positions[1].playerStartPos[0] == positions[0].body[i].x && positions[1].playerStartPos[1] ==  positions[0].body[i].y){
+			finished = true;
+			loserPlayer = positions[1].playerNo;
+			gameOver(loserPlayer);
+		}
+	}	
 }	
 
-	function gameOver(loserPlayer){
-		var winner;
-		if (loserPlayer == 0)
-			winner = 2;
-		else
-			winner = 1;
+function gameOver(loserPlayer){
+	var winner;
+	if (loserPlayer == 0)
+		winner = 2;
+	else
+		winner = 1;
 	
-		for (var i in SOCKET_LIST){
-			SOCKET_LIST[i].emit('gameOverSituation', winner);
-			delete SOCKET_LIST[i];
-			delete PLAYER_LIST[i];
-			count = 0;
-			WAITING_LIST = [];
-		}
+	for (var i in SOCKET_LIST){
+		SOCKET_LIST[i].emit('gameOverSituation', winner);
+		delete SOCKET_LIST[i];
+		delete PLAYER_LIST[i];
+		count = 0;
+		WAITING_LIST = [];
 	}
 }
 
