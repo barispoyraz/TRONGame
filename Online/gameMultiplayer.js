@@ -146,7 +146,6 @@ io.sockets.on('connection', function(socket){
 	});		
 		
 	socket.on('readyState', function(data){
-		console.log(data);
 		playerListObject[data].ready = 1;
 		var start = false;
 		
@@ -156,22 +155,16 @@ io.sockets.on('connection', function(socket){
 		for (var i in playerListObject){
 			var playerListTempObject = playerListObject[i];
 			if (playerListTempObject.roomId == p1.roomId){
-				console.log("111");
 				if (playerListTempObject.player_no != p1.player_no){
-					console.log("222");
 					p2 = playerListTempObject;
 				}
 			}
 		}
 		
 		if (p1.ready == 1 && p2.ready == 1){
-			console.log("333");
 			var players = [];
 			players.push(p1);
 			players.push(p2);
-			
-			console.log("roomid: " + p1.roomId);
-			console.log("roomid: " + p2.roomId);
 
 			start = true;
 			
@@ -218,12 +211,12 @@ function boundaryChecking(positions){
 		if (positions[i].playerStartPos[0] > canvasWIDTH - 10 || positions[i].playerStartPos[0] < 0){
 			finished = true;
 			loserPlayer = positions[i].playerNo;
-			gameOver(loserPlayer);
+			gameOver(loserPlayer, positions[i].roomId);
 		}
 		if (positions[i].playerStartPos[1] > canvasHEIGHT- 10 || positions[i].playerStartPos[1] < 0) {
 			finished = true;
 			loserPlayer = positions[i].playerNo;
-			gameOver(loserPlayer);
+			gameOver(loserPlayer, positions[i].roomId);
 		}	
 	}
 }
@@ -236,7 +229,7 @@ function collision(positions){
 		if (positions[0].playerStartPos[0] == positions[0].body[i].x && positions[0].playerStartPos[1] ==  positions[0].body[i].y){
 			finished = true;
 			loserPlayer = positions[0].playerNo;
-			gameOver(loserPlayer);
+			gameOver(loserPlayer, positions[0].roomId);
 		}
 	}
 	
@@ -244,7 +237,7 @@ function collision(positions){
 		if (positions[1].playerStartPos[0] == positions[1].body[i].x && positions[1].playerStartPos[1] ==  positions[1].body[i].y){
 			finished = true;
 			loserPlayer = positions[1].playerNo;
-			gameOver(loserPlayer);
+			gameOver(loserPlayer, positions[1].roomId);
 		}	
 	}
 	
@@ -252,7 +245,7 @@ function collision(positions){
 		if (positions[0].playerStartPos[0] == positions[1].body[i].x && positions[0].playerStartPos[1] ==  positions[1].body[i].y){
 			finished = true;
 			loserPlayer = positions[0].playerNo;
-			gameOver(loserPlayer);
+			gameOver(loserPlayer, positions[0].roomId);
 		}
 	}
 	
@@ -260,25 +253,19 @@ function collision(positions){
 		if (positions[1].playerStartPos[0] == positions[0].body[i].x && positions[1].playerStartPos[1] ==  positions[0].body[i].y){
 			finished = true;
 			loserPlayer = positions[1].playerNo;
-			gameOver(loserPlayer);
+			gameOver(loserPlayer, positions[1].roomId);
 		}
 	}	
 }	
 
-function gameOver(loserPlayer){
+function gameOver(loserPlayer, gameOverRoom){
 	var winner;
 	if (loserPlayer == 0)
 		winner = 2;
 	else
 		winner = 1;
 	
-	for (var i in SOCKET_LIST){
-		SOCKET_LIST[i].emit('gameOverSituation', winner);
-		delete SOCKET_LIST[i];
-		delete PLAYER_LIST[i];
-		count = 0;
-		WAITING_LIST = [];
-	}
+	io.sockets.in(gameOverRoom).emit('gameOverSituation', winner);
 }
 
 function PlayerBody(x, y) {
