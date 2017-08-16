@@ -111,17 +111,17 @@ io.sockets.on('connection', function(socket){
 			}
 		}
 		
-		socket.on('keypress',function(data){
-			console.log("KEY PRESSED");
-			if(data.changeto == 'right' && player.direction != 'left')
-				player.direction = 'right';
-			else if(data.changeto == 'left' && player.direction != 'right')
-				player.direction = 'left';
-			else if(data.changeto == 'up' && player.direction != 'down')
-				player.direction = 'up';
-			else if(data.changeto == 'down' && player.direction != 'up')
-				player.direction = 'down';
-		});		
+		// socket.on('keyPress',function(data){
+			// console.log("KEY PRESSED");
+			// if(data.changeto == 'RIGHT' && player.direction != 'LEFT')
+				// player.direction = 'RIGHT';
+			// else if(data.changeto == 'LEFT' && player.direction != 'RIGHT')
+				// player.direction = 'LEFT';
+			// else if(data.changeto == 'UP' && player.direction != 'DOWN')
+				// player.direction = 'UP';
+			// else if(data.changeto == 'DOWN' && player.direction != 'UP')
+				// player.direction = 'DOWN';
+		// });		
 	});
 	
 
@@ -132,17 +132,18 @@ io.sockets.on('connection', function(socket){
 		WAITING_LIST = [];
 	});		
 		
-	// socket.on('keyPress',function(data){
-			// console.log("2");
-			// if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
-				// player.direction = 'RIGHT';
-			// else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
-				// player.direction = 'LEFT';
-			// else if(data.changeTo == 'UP' && player.direction != 'DOWN')
-				// player.direction = 'UP';
-			// else if(data.changeTo == 'DOWN' && player.direction != 'UP')
-				// player.direction = 'DOWN';
-	// });		
+	socket.on('keyPress',function(data){
+			var player = playerListObject[socket.id];
+			
+			if(data.changeTo == 'RIGHT' && player.direction != 'LEFT')
+				player.direction = 'RIGHT';
+			else if(data.changeTo == 'LEFT' && player.direction != 'RIGHT')
+				player.direction = 'LEFT';
+			else if(data.changeTo == 'UP' && player.direction != 'DOWN')
+				player.direction = 'UP';
+			else if(data.changeTo == 'DOWN' && player.direction != 'UP')
+				player.direction = 'DOWN';
+	});		
 		
 	socket.on('readyState', function(data){
 		console.log(data);
@@ -211,7 +212,7 @@ function updateInformation(players){
 }
 
 function boundaryChecking(positions){
-		//Canvas Boundaries
+	//Canvas Boundaries
 	var loserPlayer;
 	for (var i = 0; i < positions.length; i++){
 		if (positions[i].playerStartPos[0] > canvasWIDTH - 10 || positions[i].playerStartPos[0] < 0){
